@@ -94,14 +94,35 @@ class MoELayer(nn.Module):
         self.experts = nn.ModuleList(
             [nn.Linear(input_dim, expert_dim) for _ in range(num_experts)]
         )
+        self.expert_dim = expert_dim
         self.gate = nn.Linear(input_dim, num_experts)
         self.output_proj = nn.Linear(expert_dim, output_dim)
 
     def forward(self, x):
+        batch_size, seq_len, _ = x.shape
         gate_scores = F.softmax(self.gate(x), dim=-1)
-        outputs = torch.stack([expert(x) for expert in self.experts], dim=1)
-        outputs = torch.sum(gate_scores.unsqueeze(2) * outputs, dim=1)
-        return self.output_proj(outputs)
+        expert_outputs = []
+
+        for i in range(self.num_experts):
+            expert_mask = torch.argmax(gate_scores, dim=-1) == i
+            if expert_mask.any():
+                expert_input = x[expert_mask]
+                expert_output = self.experts[i](expert_input)
+                expert_outputs.append((expert_output, expert_mask))
+
+        # Initialize a tensor for the final output
+        final_output = torch.zeros(
+            batch_size, seq_len, self.expert_dim, device=x.device
+        )
+
+        # Populate the final output tensor
+        for expert_output, mask in expert_outputs:
+            # You may need to adjust this part to correctly place expert_output back into final_output
+            final_output[mask] = expert_output
+
+        # Apply the projection layer to each sequence element
+        final_output = self.output_proj(final_output.view(-1, self.expert_dim))
+        return final_output.view(batch_size, seq_len, -1)
 
 
 class VisionTransformerWithMoE(VisionTransformer):

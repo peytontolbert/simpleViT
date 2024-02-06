@@ -1,6 +1,12 @@
 import unittest
 import torch
-from simplevit import PatchEmbedding, PositionalEmbedding, TransformerEncoder, ClassificationHead
+from simplevit import (
+    PatchEmbedding,
+    PositionalEmbedding,
+    TransformerEncoder,
+    ClassificationHead,
+)
+
 
 class TestPatchEmbedding(unittest.TestCase):
     def test_patch_embedding_shape(self):
@@ -10,6 +16,7 @@ class TestPatchEmbedding(unittest.TestCase):
         patches = model(x)
         expected_shape = (2, (img_size // patch_size) ** 2, embed_dim)
         self.assertEqual(patches.shape, expected_shape)
+
 
 # Add more tests as needed
 class TestPositionalEmbedding(unittest.TestCase):
@@ -21,6 +28,7 @@ class TestPositionalEmbedding(unittest.TestCase):
         expected_shape = (2, n_patches + 1, embed_dim)  # +1 for cls_token
         self.assertEqual(pos_embedding.shape, expected_shape)
 
+
 # Add more tests as needed
 class TestTransformerEncoder(unittest.TestCase):
     def test_transformer_encoder_output_shape(self):
@@ -29,6 +37,7 @@ class TestTransformerEncoder(unittest.TestCase):
         x = torch.randn(2, 197, embed_dim)  # 197 = 196 patches + 1 cls_token
         output = model(x)
         self.assertEqual(output.shape, x.shape)
+
 
 # Add more tests as needed
 class TestClassificationHead(unittest.TestCase):
@@ -39,5 +48,6 @@ class TestClassificationHead(unittest.TestCase):
         logits = model(x)
         expected_shape = (2, n_classes)
         self.assertEqual(logits.shape, expected_shape)
+
 
 # Add more tests as needed
